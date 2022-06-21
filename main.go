@@ -29,33 +29,29 @@ var errNoOperation = errors.New("-operation flag has to be specified")
 var errNoItem = errors.New("-item flag has to be specified")
 var errNoId = errors.New("-id flag has to be specified")
 
+func checkError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func Perform(args Arguments, writer io.Writer) error {
 
 	if fileName, ok := args["fileName"]; ok && fileName == "" {
 		return errNoFile
 	} else if ok {
 		file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0755)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
+
+		defer file.Close()
 
 		fileInfo, err := os.Stat(fileName)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 	
 		fileSize := fileInfo.Size()
 		if fileSize == 0 {
-
 			err = ioutil.WriteFile(fileName, []byte("[]"), 0755)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		err = file.Close()
-		if err != nil {
-			panic(err)
+			checkError(err)
 		}
 	}
 
@@ -107,9 +103,7 @@ func main() {
 func list(args Arguments, writer io.Writer) {
 
 	f, err := ioutil.ReadFile(args["fileName"])
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	writer.Write(f)
 }
@@ -121,19 +115,13 @@ func add(args Arguments, writer io.Writer) error {
 	} else if ok {
 
 		err := json.Unmarshal([]byte(item), &i)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		f, err := os.ReadFile(args["fileName"])
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		err = json.Unmarshal(f, &l)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		for _, val := range l {
 			if val.Id == i.Id {
@@ -144,14 +132,10 @@ func add(args Arguments, writer io.Writer) error {
 
 		l = append(l, i)
 		b, err := json.Marshal(l)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		err = ioutil.WriteFile(args["fileName"], b, 0755)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 	}
 
 	return nil
@@ -164,22 +148,16 @@ func findById(args Arguments, writer io.Writer) error {
 	} else if ok {
 
 		f, err := os.ReadFile(args["fileName"])
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		err = json.Unmarshal(f, &l)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		for _, i := range l {
-			if i.Id == args["id"] {
+			if i.Id == id {
 
 				b, err := json.Marshal(i)
-				if err != nil {
-					panic(err)
-				}
+				checkError(err)
 
 				writer.Write(b)
 			}
@@ -198,29 +176,21 @@ func remove(args Arguments, writer io.Writer) error {
 	} else if ok {
 		
 		f, err := os.ReadFile(args["fileName"])
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		err = json.Unmarshal(f, &l)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 
 		for i, v := range l {
-			if v.Id == args["id"] {
+			if v.Id == id {
 
 				l = append(l[:i], l[i+1:]... )
 
 				b, err := json.Marshal(l)
-				if err != nil {
-					panic(err)
-				}
+				checkError(err)
 
 				err = ioutil.WriteFile(args["fileName"], b, 0755)
-				if err != nil {
-					panic(err)
-				}
+				checkError(err)
 
 				return nil
 			}
